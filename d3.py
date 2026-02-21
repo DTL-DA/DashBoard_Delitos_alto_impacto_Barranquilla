@@ -20,8 +20,7 @@ st.title("Dashboard Analitico con Metodologia QUEST")
 st.markdown("Este dashboard sigue la metodologia QUEST para un analisis estructurado y profesional.")
 
 # 🔹 Ruta fija de Colab
-RUTA_ARCHIVO = "/content/Comparativo_de_delitos_de_alto_impacto_en_la_ciudad_de_Barranquilla_20260221.csv"
-
+RUTA_ARCHIVO = "https://github.com/DTL-DA/ActClass4/blob/DTL-DA-patch-1/Comparativo_de_delitos_de_alto_impacto_en_la_ciudad_de_Barranquilla_20260221.csv"
 @st.cache_data
 def cargar_datos():
     try:
@@ -76,7 +75,6 @@ if not datos.empty:
 else:
     st.info("No se pudo cargar el dataset.")
 
-
-
+   
                            
               
