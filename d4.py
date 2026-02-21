@@ -2,10 +2,9 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import io # Added this import
+import io
 
-st.set_page_config(page_title="Dashboard Analitico", page_icon="📊", layout="wide")
+st.set_page_config(page_title="Dashboard Delitos Barranquilla", page_icon="📊", layout="wide")
 
 def colores_pastel():
     return {
@@ -14,104 +13,112 @@ def colores_pastel():
         'rosa_pastel': '#F7C6D9',
         'amarillo_pastel': '#FFF2B2',
         'morado_pastel': '#D7BDE2',
+        'naranja_pastel': '#FFE4B5',
         'fondo': '#F8F9FA',
         'texto': '#2C3E50'
     }
 
-# Metodologia QUEST
-# Q: Question - Definir preguntas clave del analisis
-# U: Understand - Comprender la estructura de los datos
-# E: Explore - Explorar patrones y distribuciones
-# S: Summarize - Resumir estadisticas descriptivas
-# T: Transform - Transformar en visualizaciones accionables
+st.title("Dashboard Analitico Delitos Alto Impacto Barranquilla")
+st.markdown("Analisis comparativo utilizando Metodologia QUEST sobre el archivo proporcionado.")
 
-st.title("Dashboard Analitico con Metodologia QUEST")
-st.markdown("Este dashboard sigue la metodologia QUEST para un analisis estructurado y profesional.")
+ruta_archivo = '/content/Comparativo_de_delitos_de_alto_impacto_en_la_ciudad_de_Barranquilla_20260221.csv'
 
-# Q: Question - Cargar el archivo adjunto (asumiendo CSV)
 @st.cache_data
-def cargar_datos(file_path): # Changed parameter to a variable name
+def cargar_datos(ruta):
     try:
-        datos = pd.read_csv(file_path) # Used the parameter here
+        datos = pd.read_csv(ruta, encoding='utf-8', sep=',')
+        st.success("Archivo cargado exitosamente.")
         return datos
-    except Exception as e: # Added specific exception handling for better debugging
-        st.error(f"No se encontro el archivo o hubo un error al cargarlo: {e}. Asegurese que el archivo '{file_path}' este en el directorio.")
+    except Exception as e:
+        st.error(f"Error al cargar: {str(e)}. Verifique la ruta y suba el archivo en Colab.")
         return pd.DataFrame()
 
-# U: Understand - Mostrar estructura de datos
-ruta_archivo = '/content/Comparativo_de_delitos_de_alto_impacto_en_la_ciudad_de_Barranquilla_20260221.csv'  # Corrected to the actual file path
 datos = cargar_datos(ruta_archivo)
 
 if not datos.empty:
-    col1, col2 = st.columns(2)
+    # Q: Question - Preguntas clave: Evolucion de delitos, tipos mas comunes, tendencias
+    st.subheader("Q: Preguntas Clave del Analisis")
+    st.write("Cuales son los delitos mas frecuentes. Como evolucionan en el tiempo. Diferencias por area.")
+
+    # U: Understand - Estructura
+    col1, col2, col3 = st.columns(3)
     with col1:
-        st.subheader("Estructura de Datos")
-        st.dataframe(datos.head(), use_container_width=True)
+        st.metric("Registros Totales", f"{len(datos):,}")
     with col2:
-        st.subheader("Informacion General")
-        buffer = io.StringIO()
-        datos.info(buf=buffer)
-        st.text(buffer.getvalue())
-        st.metric("Filas Totales", len(datos))
         st.metric("Columnas", len(datos.columns))
+    with col3:
+        st.metric("Valores Unicos Totales", datos.nunique().sum())
 
-    # E: Explore - Distribuciones basicas
-    st.subheader("Exploracion de Datos")
+    st.subheader("U: Entender Estructura")
+    st.dataframe(datos.head(10), use_container_width=True)
+    
+    buffer = io.StringIO()
+    datos.info(buf=buffer)
+    st.text(buffer.getvalue())
+
+    # E: Explore - Exploracion
+    st.subheader("E: Exploracion Inicial")
     col1, col2 = st.columns(2)
     with col1:
-        # Ensure 'datos' has numerical columns before attempting to plot histograms
-        if len(datos.select_dtypes(include=['number']).columns) > 0:
-            fig_hist = px.histogram(datos, nbins=20, template='plotly_white',
-                                    color_discrete_sequence=[colores_pastel()['azul_pastel']])
-            st.plotly_chart(fig_hist, use_container_width=True)
-        else:
-            st.info("No se encontraron columnas numericas para el histograma.")
+        if 'Tipo_Delito' in datos.columns or datos.select_dtypes(include='object').columns.any():
+            cols_obj = datos.select_dtypes(include='object').columns
+            col_obj = cols_obj[0] if len(cols_obj)>0 else None
+            if col_obj:
+                fig_count = px.bar(datos[col_obj].value_counts().head(10).reset_index(),
+                                   x=col_obj, y=col_obj, orientation='h',
+                                   color_discrete_sequence=[colores_pastel()['rosa_pastel']],
+                                   template='plotly_white')
+                st.plotly_chart(fig_count, use_container_width=True)
     with col2:
-        numericas = datos.select_dtypes(include=['number']).columns.tolist()
-        if numericas:
-            selected_col = st.selectbox("Seleccionar columna numerica", numericas)
-            fig_box = px.box(datos, y=selected_col, template='plotly_white',
-                             color_discrete_sequence=[colores_pastel()['verde_pastel']])
-            st.plotly_chart(fig_box, use_container_width=True)
-        else:
-            st.info("No se encontraron columnas numericas para el grafico de caja.")
+        numericas = datos.select_dtypes(include=['number']).columns
+        if len(numericas)>0:
+            fig_corr = px.imshow(datos[numericas].corr(), color_continuous_scale='RdBu_r',
+                                 template='plotly_white')
+            st.plotly_chart(fig_corr, use_container_width=True)
 
-    # S: Summarize - Estadisticas descriptivas
-    st.subheader("Resumen Estadistico")
-    if len(numericas) > 0:
-        st.dataframe(datos[numericas].describe(), use_container_width=True)
-    else:
-        st.info("No se encontraron columnas numericas para el resumen estadistico.")
+    # S: Summarize - Resumen
+    st.subheader("S: Resumen Estadistico")
+    st.dataframe(datos.describe(), use_container_width=True)
 
-    # T: Transform - Visualizaciones avanzadas con colores pastel
-    st.subheader("Visualizaciones Transformadas")
-    colores = [colores_pastel()['azul_pastel'], colores_pastel()['verde_pastel'],
-               colores_pastel()['rosa_pastel'], colores_pastel()['amarillo_pastel']]
+    # T: Transform - Visualizaciones clave para delitos
+    st.subheader("T: Visualizaciones Transformadas")
+    colores = list(colores_pastel().values())[1:6]
 
-    categoricas = datos.select_dtypes(include=['object']).columns.tolist()
-    if categoricas and numericas:
-        cat_col = st.selectbox("Columna categorica", categoricas)
-        num_col = st.selectbox("Columna numerica para grafico", numericas)
-        fig_bar = px.bar(datos, x=cat_col, y=num_col, color=cat_col,
-                         color_discrete_sequence=colores, template='plotly_white')
-        st.plotly_chart(fig_bar, use_container_width=True)
-    elif categoricas and not numericas:
-        st.info("No hay columnas numericas para crear graficos de barras combinando categoricas y numericas.")
-    elif not categoricas and numericas:
-        st.info("No hay columnas categoricas para crear graficos de barras combinando categoricas y numericas.")
-    else:
-        st.info("No hay columnas categoricas o numericas para crear graficos de barras.")
+    if 'Fecha' in datos.columns or 'Mes' in datos.columns or datos.select_dtypes(include='datetime').columns.any():
+        fecha_col = next((col for col in datos.columns if 'fecha' in col.lower() or 'mes' in col.lower()), None)
+        if fecha_col:
+            fig_line = px.line(datos.groupby(fecha_col).size().reset_index(),
+                               x=fecha_col, y=0, title="Evolucion Temporal Delitos",
+                               color_discrete_sequence=[colores_pastel()['azul_pastel']],
+                               template='plotly_white')
+            st.plotly_chart(fig_line, use_container_width=True)
 
-    if len(numericas) >= 2:
-        fig_scatter = px.scatter(datos, x=numericas[0], y=numericas[1],
-                                 trendline="ols", template='plotly_white',
-                                 color_discrete_sequence=[colores_pastel()['morado_pastel']])
-        st.plotly_chart(fig_scatter, use_container_width=True)
-    elif len(numericas) < 2 and len(numericas) > 0:
-        st.info("Se necesitan al menos dos columnas numericas para crear un grafico de dispersion.")
-    else:
-        st.info("No se encontraron columnas numericas para crear un grafico de dispersion.")
+    # Grafico de pastel o dona para tipos de delito
+    tipo_delito = next((col for col in datos.columns if 'delito' in col.lower() or 'tipo' in col.lower()), None)
+    if tipo_delito:
+        top_tipos = datos[tipo_delito].value_counts().head(8)
+        fig_pie = px.pie(values=top_tipos.values, names=top_tipos.index,
+                         color_discrete_sequence=colores,
+                         template='plotly_white')
+        st.plotly_chart(fig_pie, use_container_width=True)
 
-    st.markdown("Dashboard generado con colores pastel para una presentacion profesional.")
+    # Mapa si hay coordenadas, sino barras por categoria
+    cols_num = datos.select_dtypes(include=['number']).columns.tolist()
+    if len(cols_num) >= 2:
+        fig_scatter_delitos = px.scatter(datos, x=cols_num[0], y=cols_num[1],
+                                         color=tipo_delito if tipo_delito else None,
+                                         color_discrete_sequence=colores,
+                                         template='plotly_white', title="Relacion Variables Numericas")
+        st.plotly_chart(fig_scatter_delitos, use_container_width=True)
+
+    st.markdown("Este dashboard se adapta a las columnas del archivo. Colores pastel para visualizacion profesional.")
 else:
-    st.info("Por favor, proporcione el archivo CSV adjunto para visualizar el dashboard.") # Simplified the message
+    st.info("Suba el archivo CSV a /content/ en Google Colab o ajuste la ruta_archivo al nombre exacto.")
+
+
+
+   
+  
+   
+
+   
