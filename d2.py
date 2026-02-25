@@ -6,7 +6,7 @@ from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
 st.set_page_config(page_title="Serie Temporal Delitos Barranquilla", layout="wide")
 
-st.title("Serie Temporal y Pronóstico de Delitos de Alto Impacto")
+st.title("Serie Temporal y Pronóstico de Delitos")
 
 # =========================
 # CARGA
@@ -34,7 +34,7 @@ df["Casos/denuncias último periodo"] = pd.to_numeric(
 df = df.dropna(subset=["Casos/denuncias último periodo"])
 
 # =========================
-# EXTRAER AÑO FINAL DEL RANGO
+# EXTRAER AÑO FINAL
 # =========================
 
 df["Año"] = df["Años comparados"].str.split("-").str[1]
@@ -51,33 +51,35 @@ df["Fecha"] = pd.to_datetime(
 df = df.dropna(subset=["Fecha"])
 
 # =========================
-# FILTRAR SOLO ALTO IMPACTO
-# =========================
-
-df = df[df["Delito"].str.contains("alto", case=False, na=False)]
-
-# =========================
-# CREAR SERIE TEMPORAL
+# CREAR SERIE AGREGADA
 # =========================
 
 df = df.sort_values("Fecha")
-df = df.set_index("Fecha")
 
-serie = df["Casos/denuncias último periodo"]
+serie = (
+    df.groupby("Fecha")["Casos/denuncias último periodo"]
+    .sum()
+    .sort_index()
+)
 
-# Agrupar por mes por seguridad
-serie = serie.resample("M").sum()
+# Forzar frecuencia mensual
+serie = serie.asfreq("M")
 
 st.subheader("Resumen de la serie")
 st.write("Fecha inicial:", serie.index.min())
 st.write("Fecha final:", serie.index.max())
 st.write("Cantidad de meses:", len(serie))
 
-if len(serie) < 24:
-    st.warning("La serie tiene pocos datos. El pronóstico puede ser inestable.")
+# Verificación crítica
+if serie.empty:
+    st.error("La serie quedó vacía. Revisar estructura del archivo.")
+    st.stop()
+
+if len(serie) < 12:
+    st.warning("Hay pocos datos. El modelo puede ser inestable.")
 
 # =========================
-# MODELO HOLT (TENDENCIA)
+# MODELO
 # =========================
 
 modelo = ExponentialSmoothing(
@@ -87,13 +89,16 @@ modelo = ExponentialSmoothing(
 ).fit()
 
 # =========================
-# PRONÓSTICO HASTA DICIEMBRE 2025
+# PRONÓSTICO
 # =========================
 
 ultima_fecha = serie.index[-1]
 meses_proyeccion = (2025 - ultima_fecha.year) * 12 + (12 - ultima_fecha.month)
 
-pronostico = modelo.forecast(meses_proyeccion)
+if meses_proyeccion > 0:
+    pronostico = modelo.forecast(meses_proyeccion)
+else:
+    pronostico = pd.Series()
 
 # =========================
 # GRÁFICO
@@ -102,20 +107,20 @@ pronostico = modelo.forecast(meses_proyeccion)
 fig, ax = plt.subplots(figsize=(12, 6))
 
 ax.plot(serie.index, serie.values, label="Histórico")
-ax.plot(pronostico.index, pronostico.values, linestyle="--", label="Pronóstico")
 
+if not pronostico.empty:
+    ax.plot(pronostico.index, pronostico.values, linestyle="--", label="Pronóstico")
+
+ax.legend()
 ax.set_xlabel("Fecha")
 ax.set_ylabel("Casos")
-ax.legend()
 
 st.pyplot(fig)
 
 # =========================
-# TABLA PRONÓSTICO
+# TABLA
 # =========================
 
-df_pronostico = pronostico.reset_index()
-df_pronostico.columns = ["Fecha", "Pronóstico"]
-
-st.subheader("Pronóstico hasta diciembre 2025")
-st.dataframe(df_pronostico)
+if not pronostico.empty:
+    st.subheader("Pronóstico hasta diciembre 2025")
+    st.dataframe(pronostico.reset_index().rename(columns={0: "Pronóstico"}))
