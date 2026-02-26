@@ -42,7 +42,7 @@ df = df.dropna()
 st.title("Análisis de Delitos de Alto Impacto en Barranquilla")
 
 st.markdown("""
-## Pregunta problema
+
 
 **¿Qué relación existe entre el volumen de denuncias y la variación observada en los delitos de alto impacto?**
 """)
@@ -88,30 +88,6 @@ col4.metric("Variación porcentual (Total)", f"{variacion_porcentual_total:.2f}%
 
 st.markdown("---")
 
-# -------------------------------------------------------------------
-# TABLA CONSOLIDADA POR DELITO
-# -------------------------------------------------------------------
-
-st.subheader("Resumen consolidado por delito")
-
-tabla_resumen = df_filtrado.groupby("Delito").agg({
-    "Casos/denuncias  anterior periodo": "sum",
-    "Casos/denuncias último periodo": "sum"
-}).reset_index()
-
-tabla_resumen["Variación absoluta"] = (
-    tabla_resumen["Casos/denuncias último periodo"] -
-    tabla_resumen["Casos/denuncias  anterior periodo"]
-)
-
-tabla_resumen["Variación %"] = (
-    tabla_resumen["Variación absoluta"] /
-    tabla_resumen["Casos/denuncias  anterior periodo"] * 100
-)
-
-st.dataframe(tabla_resumen, use_container_width=True)
-
-st.markdown("---")
 
 # -------------------------------------------------------------------
 # VARIACIÓN ABSOLUTA POR DELITO
@@ -156,6 +132,31 @@ fig_comp = px.bar(
     barmode="group",
     title="Comparación entre periodos"
 )
+# -------------------------------------------------------------------
+# TABLA CONSOLIDADA POR DELITO
+# -------------------------------------------------------------------
+
+st.subheader("Resumen consolidado por delito")
+
+tabla_resumen = df_filtrado.groupby("Delito").agg({
+    "Casos/denuncias  anterior periodo": "sum",
+    "Casos/denuncias último periodo": "sum"
+}).reset_index()
+
+tabla_resumen["Variación absoluta"] = (
+    tabla_resumen["Casos/denuncias último periodo"] -
+    tabla_resumen["Casos/denuncias  anterior periodo"]
+)
+
+tabla_resumen["Variación %"] = (
+    tabla_resumen["Variación absoluta"] /
+    tabla_resumen["Casos/denuncias  anterior periodo"] * 100
+)
+
+st.dataframe(tabla_resumen, use_container_width=True)
+
+st.markdown("---")
+
 
 fig_comp.update_layout(xaxis_tickangle=45)
 
