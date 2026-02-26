@@ -6,32 +6,31 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="Delitos de Alto Impacto - Barranquilla", layout="wide")
 
 # -------------------------------------------------------------------
-# Título y pregunta problema
+# TÍTULO Y PREGUNTA PROBLEMA
 # -------------------------------------------------------------------
 
 st.title("Análisis de Delitos de Alto Impacto en Barranquilla")
 
 st.markdown("""
-### Pregunta problema
+## Pregunta problema
 
-¿Qué relación existe entre el volumen de denuncias y la variación observada en los delitos de alto impacto?
+**¿Qué relación existe entre el volumen de denuncias y la variación observada en los delitos de alto impacto?**
 """)
 
 st.markdown("---")
 
 # -------------------------------------------------------------------
-# Cargar datos
+# CARGA DE DATOS
 # -------------------------------------------------------------------
 
 archivo = st.file_uploader("Cargar archivo CSV", type=["csv"])
 
 if archivo is not None:
-    df = pd.read_csv(archivo)
 
-    # Limpieza básica
+    df = pd.read_csv(archivo)
     df.columns = df.columns.str.strip()
 
-    # Convertir columnas numéricas
+    # Limpieza numérica
     df["Casos/denuncias  anterior periodo"] = pd.to_numeric(
         df["Casos/denuncias  anterior periodo"], errors="coerce"
     )
@@ -53,116 +52,148 @@ if archivo is not None:
         df["Variación absoluta"], errors="coerce"
     )
 
-    # Eliminar filas vacías
-    df = df.dropna(subset=["Casos/denuncias último periodo"])
+    df = df.dropna()
 
     # -------------------------------------------------------------------
-    # Indicadores generales
+    # FILTROS
     # -------------------------------------------------------------------
 
-    total_denuncias = df["Casos/denuncias último periodo"].sum()
-    variacion_promedio = df["Variación %"].mean()
+    st.sidebar.header("Filtros")
+
+    # Filtro por periodo
+    periodos = df["Periodo meses comparado"].unique()
+    periodo_seleccionado = st.sidebar.multiselect(
+        "Seleccionar periodo",
+        options=periodos,
+        default=periodos
+    )
+
+    # Filtro por delito
+    delitos = df["Delito"].unique()
+    delito_seleccionado = st.sidebar.multiselect(
+        "Seleccionar delito",
+        options=delitos,
+        default=delitos
+    )
+
+    df_filtrado = df[
+        (df["Periodo meses comparado"].isin(periodo_seleccionado)) &
+        (df["Delito"].isin(delito_seleccionado))
+    ]
+
+    # -------------------------------------------------------------------
+    # INDICADORES GENERALES
+    # -------------------------------------------------------------------
+
+    total_actual = df_filtrado["Casos/denuncias último periodo"].sum()
+    total_anterior = df_filtrado["Casos/denuncias  anterior periodo"].sum()
 
     col1, col2 = st.columns(2)
 
-    col1.metric("Total denuncias último periodo", f"{int(total_denuncias):,}")
-    col2.metric("Variación porcentual promedio", f"{variacion_promedio:.2f}%")
+    col1.metric("Total denuncias último periodo", f"{int(total_actual):,}")
+    col2.metric("Total denuncias periodo anterior", f"{int(total_anterior):,}")
 
     st.markdown("---")
 
     # -------------------------------------------------------------------
-    # 1. Ranking por volumen de denuncias
+    # 1️⃣ BARRAS COMPARANDO PERIODOS
     # -------------------------------------------------------------------
 
-    st.subheader("Ranking por volumen de denuncias")
+    st.subheader("Comparación de denuncias entre periodos")
 
-    df_volumen = df.sort_values(
-        by="Casos/denuncias último periodo", ascending=False
+    df_comparacion = df_filtrado.melt(
+        id_vars="Delito",
+        value_vars=[
+            "Casos/denuncias  anterior periodo",
+            "Casos/denuncias último periodo"
+        ],
+        var_name="Periodo",
+        value_name="Denuncias"
     )
 
     fig1 = px.bar(
-        df_volumen,
+        df_comparacion,
         x="Delito",
-        y="Casos/denuncias último periodo",
-        title="Volumen de denuncias por tipo de delito",
+        y="Denuncias",
+        color="Periodo",
+        barmode="group",
+        title="Comparación de denuncias por delito"
     )
 
     fig1.update_layout(xaxis_tickangle=45)
-
     st.plotly_chart(fig1, use_container_width=True)
 
     # -------------------------------------------------------------------
-    # 2. Variación porcentual por delito
+    # 2️⃣ VARIACIÓN PORCENTUAL
     # -------------------------------------------------------------------
 
     st.subheader("Variación porcentual por delito")
 
     fig2 = px.bar(
-        df,
+        df_filtrado,
         x="Delito",
         y="Variación %",
-        title="Variación porcentual entre periodos",
+        title="Variación porcentual entre periodos"
     )
 
     fig2.update_layout(xaxis_tickangle=45)
-
     st.plotly_chart(fig2, use_container_width=True)
 
     # -------------------------------------------------------------------
-    # 3. Relación entre volumen y variación
+    # 3️⃣ RELACIÓN VOLUMEN vs VARIACIÓN (Scatter con tendencia)
     # -------------------------------------------------------------------
 
-    st.subheader("Relación entre volumen de denuncias y variación porcentual")
+    st.subheader("Relación entre volumen de denuncias y variación")
 
     fig3 = px.scatter(
-        df,
+        df_filtrado,
         x="Casos/denuncias último periodo",
         y="Variación %",
         size="Casos/denuncias último periodo",
         color="Delito",
-        hover_name="Delito",
-        title="Volumen vs Variación %",
+        trendline="ols",
+        title="Volumen vs Variación porcentual"
     )
 
     st.plotly_chart(fig3, use_container_width=True)
 
     # -------------------------------------------------------------------
-    # 4. Participación porcentual de cada delito
+    # 4️⃣ DIAGRAMA DE CORRELACIÓN (MATRIZ)
     # -------------------------------------------------------------------
 
-    st.subheader("Participación porcentual de cada delito")
+    st.subheader("Matriz de correlación")
 
-    df["Participación %"] = (
-        df["Casos/denuncias último periodo"] / total_denuncias * 100
-    )
+    variables_corr = df_filtrado[[
+        "Casos/denuncias  anterior periodo",
+        "Casos/denuncias último periodo",
+        "Variación %",
+        "Variación absoluta"
+    ]]
 
-    fig4 = px.pie(
-        df,
-        values="Casos/denuncias último periodo",
-        names="Delito",
-        title="Distribución de denuncias por delito",
+    matriz_corr = variables_corr.corr()
+
+    fig4 = px.imshow(
+        matriz_corr,
+        text_auto=True,
+        title="Mapa de calor de correlaciones",
+        aspect="auto"
     )
 
     st.plotly_chart(fig4, use_container_width=True)
 
     # -------------------------------------------------------------------
-    # 5. Correlación estadística
+    # 5️⃣ COEFICIENTE DE CORRELACIÓN PRINCIPAL
     # -------------------------------------------------------------------
 
-    st.subheader("Análisis de correlación")
+    st.subheader("Correlación principal")
 
-    correlacion = df["Casos/denuncias último periodo"].corr(df["Variación %"])
-
-    st.write(
-        f"Coeficiente de correlación entre volumen de denuncias y variación porcentual: {correlacion:.3f}"
+    correlacion = df_filtrado["Casos/denuncias último periodo"].corr(
+        df_filtrado["Variación %"]
     )
 
-    if correlacion > 0:
-        st.write("Existe una relación positiva entre volumen y variación.")
-    elif correlacion < 0:
-        st.write("Existe una relación negativa entre volumen y variación.")
-    else:
-        st.write("No se observa relación lineal significativa.")
+    st.write(
+        f"Coeficiente de correlación entre volumen y variación porcentual: **{correlacion:.3f}**"
+    )
 
 else:
     st.info("Cargue el archivo CSV para visualizar el análisis.")
