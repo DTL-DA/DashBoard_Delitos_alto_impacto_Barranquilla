@@ -20,31 +20,16 @@ df["Casos/denuncias último periodo"] = pd.to_numeric(
     df["Casos/denuncias último periodo"], errors="coerce"
 )
 
-df["Variación %"] = (
-    df["Variación %"]
-    .astype(str)
-    .str.replace("%", "", regex=False)
-    .str.replace(",", ".", regex=False)
-)
-
-df["Variación %"] = pd.to_numeric(df["Variación %"], errors="coerce")
-
-df["Variación absoluta"] = pd.to_numeric(
-    df["Variación absoluta"], errors="coerce"
-)
-
 df = df.dropna()
 
 # -------------------------------------------------------------------
-# TÍTULO
+# TÍTULO Y PREGUNTA (SIN TEXTO EXTRA)
 # -------------------------------------------------------------------
 
 st.title("Análisis de Delitos de Alto Impacto en Barranquilla")
 
 st.markdown("""
-
-
-**¿Qué relación existe entre el volumen de denuncias y la variación observada en los delitos de alto impacto?**
+## ¿Qué relación existe entre el volumen de denuncias y la variación observada en los delitos de alto impacto?
 """)
 
 st.markdown("---")
@@ -88,12 +73,26 @@ col4.metric("Variación porcentual (Total)", f"{variacion_porcentual_total:.2f}%
 
 st.markdown("---")
 
-
 # -------------------------------------------------------------------
 # VARIACIÓN ABSOLUTA POR DELITO
 # -------------------------------------------------------------------
 
 st.subheader("Variación absoluta por delito")
+
+tabla_resumen = df_filtrado.groupby("Delito").agg({
+    "Casos/denuncias  anterior periodo": "sum",
+    "Casos/denuncias último periodo": "sum"
+}).reset_index()
+
+tabla_resumen["Variación absoluta"] = (
+    tabla_resumen["Casos/denuncias último periodo"] -
+    tabla_resumen["Casos/denuncias  anterior periodo"]
+)
+
+tabla_resumen["Variación %"] = (
+    tabla_resumen["Variación absoluta"] /
+    tabla_resumen["Casos/denuncias  anterior periodo"] * 100
+)
 
 fig_var_abs = px.bar(
     tabla_resumen,
@@ -132,32 +131,17 @@ fig_comp = px.bar(
     barmode="group",
     title="Comparación entre periodos"
 )
-# -------------------------------------------------------------------
-# TABLA CONSOLIDADA POR DELITO
-# -------------------------------------------------------------------
-
-st.subheader("Resumen consolidado por delito")
-
-tabla_resumen = df_filtrado.groupby("Delito").agg({
-    "Casos/denuncias  anterior periodo": "sum",
-    "Casos/denuncias último periodo": "sum"
-}).reset_index()
-
-tabla_resumen["Variación absoluta"] = (
-    tabla_resumen["Casos/denuncias último periodo"] -
-    tabla_resumen["Casos/denuncias  anterior periodo"]
-)
-
-tabla_resumen["Variación %"] = (
-    tabla_resumen["Variación absoluta"] /
-    tabla_resumen["Casos/denuncias  anterior periodo"] * 100
-)
-
-st.dataframe(tabla_resumen, use_container_width=True)
-
-st.markdown("---")
-
 
 fig_comp.update_layout(xaxis_tickangle=45)
 
 st.plotly_chart(fig_comp, use_container_width=True)
+
+st.markdown("---")
+
+# -------------------------------------------------------------------
+# TABLA RESUMEN (AHORA AL FINAL)
+# -------------------------------------------------------------------
+
+st.subheader("Tabla resumen consolidada por delito")
+
+st.dataframe(tabla_resumen, use_container_width=True)
