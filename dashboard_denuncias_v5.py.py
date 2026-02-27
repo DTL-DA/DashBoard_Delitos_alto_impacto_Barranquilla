@@ -123,7 +123,7 @@ if pagina == "Dashboard Analítico":
 
     st.subheader("Matriz de correlación")
 
-     st.markdown("""
+    st.markdown("""
     ## ¿Los delitos que tenían más denuncias antes siguen teniendo más ahora?
        """)
     
@@ -162,7 +162,7 @@ if pagina == "Dashboard Analítico":
        El impacto delictivo está concentrado en delitos estructurales.
        """)
 
-     st.markdown("""
+    st.markdown("""
     ## Si fuera baja:
        Hubo reconfiguración del patrón delictivo
        """)
