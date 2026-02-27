@@ -23,7 +23,7 @@ df["Casos/denuncias último periodo"] = pd.to_numeric(
 df = df.dropna()
 
 # -------------------------------------------------------------------
-# TÍTULO Y PREGUNTA (SIN TEXTO EXTRA)
+# TÍTULO
 # -------------------------------------------------------------------
 
 st.title("Análisis de Delitos de Alto Impacto en Barranquilla")
@@ -35,12 +35,13 @@ st.markdown("""
 st.markdown("---")
 
 # -------------------------------------------------------------------
-# FILTRO POR AÑO
+# FILTROS
 # -------------------------------------------------------------------
 
 st.sidebar.header("Filtros")
 
-años = df["Años comparados"].unique()
+# Filtro por año
+años = sorted(df["Años comparados"].unique())
 
 año_seleccionado = st.sidebar.multiselect(
     "Seleccionar año",
@@ -49,6 +50,17 @@ año_seleccionado = st.sidebar.multiselect(
 )
 
 df_filtrado = df[df["Años comparados"].isin(año_seleccionado)]
+
+# Filtro por delito
+delitos = sorted(df_filtrado["Delito"].unique())
+
+delito_seleccionado = st.sidebar.multiselect(
+    "Seleccionar delito",
+    options=delitos,
+    default=delitos
+)
+
+df_filtrado = df_filtrado[df_filtrado["Delito"].isin(delito_seleccionado)]
 
 # -------------------------------------------------------------------
 # TOTALES GENERALES
@@ -74,10 +86,8 @@ col4.metric("Variación porcentual (Total)", f"{variacion_porcentual_total:.2f}%
 st.markdown("---")
 
 # -------------------------------------------------------------------
-# VARIACIÓN ABSOLUTA POR DELITO
+# TABLA RESUMEN BASE
 # -------------------------------------------------------------------
-
-st.subheader("Variación absoluta por delito")
 
 tabla_resumen = df_filtrado.groupby("Delito").agg({
     "Casos/denuncias  anterior periodo": "sum",
@@ -93,6 +103,12 @@ tabla_resumen["Variación %"] = (
     tabla_resumen["Variación absoluta"] /
     tabla_resumen["Casos/denuncias  anterior periodo"] * 100
 )
+
+# -------------------------------------------------------------------
+# VARIACIÓN ABSOLUTA POR DELITO
+# -------------------------------------------------------------------
+
+st.subheader("Variación absoluta por delito")
 
 fig_var_abs = px.bar(
     tabla_resumen,
@@ -139,7 +155,7 @@ st.plotly_chart(fig_comp, use_container_width=True)
 st.markdown("---")
 
 # -------------------------------------------------------------------
-# TABLA RESUMEN (AHORA AL FINAL)
+# TABLA RESUMEN FINAL
 # -------------------------------------------------------------------
 
 st.subheader("Tabla resumen consolidada por delito")
