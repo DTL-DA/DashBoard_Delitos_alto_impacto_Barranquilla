@@ -225,7 +225,7 @@ if pagina == "Dashboard Analítico":
 
 
     st.markdown("""
-    ## Si el gráfico muestra que pocos delitos concentran el 80%:
+    ## El gráfico muestra que pocos delitos concentran el 80%:
 
        El fenómeno es estructural y focalizable
        
@@ -233,7 +233,7 @@ if pagina == "Dashboard Analítico":
 
        Contrario a esto:
 
-       Si el 80% del cambio necesita muchos delitos:
+       Si el 80% de las denuncias necesita muchos delitos:
 
        El fenómeno es generalizado
        
