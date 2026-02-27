@@ -123,7 +123,10 @@ if pagina == "Dashboard Analítico":
 
     st.subheader("Matriz de correlación")
 
-
+     st.markdown("""
+    ## ¿Los delitos que tenían más denuncias antes siguen teniendo más ahora?
+       """)
+    
     df_filtrado["Variación absoluta"] = (
         df_filtrado["Casos/denuncias último periodo"] -
         df_filtrado["Casos/denuncias  anterior periodo"]
@@ -151,6 +154,18 @@ if pagina == "Dashboard Analítico":
     )
     
     st.plotly_chart(fig4, use_container_width=True)
+
+    st.markdown("""
+    ## es alta y positiva (cerca de 1), significa:
+       Los delitos más frecuentes siguen siendo los más frecuentes.
+       La estructura delictiva es estable.   
+       El impacto delictivo está concentrado en delitos estructurales.
+       """)
+
+     st.markdown("""
+    ## Si fuera baja:
+       Hubo reconfiguración del patrón delictivo
+       """)
 
     # -------------------------------------------------------------------
     # PRINCIPIO DE PARETO 80/20
