@@ -184,12 +184,12 @@ fig_var_abs = px.bar(
 
 fig_var_abs.update_layout(xaxis_tickangle=45)
 
-st.plotly_chart(fig_var_abs, use_container_width=True)
+    st.plotly_chart(fig_var_abs, use_container_width=True)
 
-st.markdown("---")
+    st.markdown("---")
 
-st.subheader("Tabla resumen consolidada por delito")
-st.dataframe(tabla_resumen, use_container_width=True)
+    st.subheader("Tabla resumen consolidada por delito")
+    st.dataframe(tabla_resumen, use_container_width=True)
 
 
 # -------------------------------------------------------------------
