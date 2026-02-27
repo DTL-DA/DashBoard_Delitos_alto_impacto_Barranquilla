@@ -163,33 +163,33 @@ st.dataframe(
     use_container_width=True
 )
     # TABLA RESUMEN
-    tabla_resumen = df_filtrado.groupby("Delito").agg({
+tabla_resumen = df_filtrado.groupby("Delito").agg({
         "Casos/denuncias  anterior periodo": "sum",
         "Casos/denuncias último periodo": "sum"
-    }).reset_index()
+}).reset_index()
 
-    tabla_resumen["Variación absoluta"] = (
+tabla_resumen["Variación absoluta"] = (
         tabla_resumen["Casos/denuncias último periodo"] -
         tabla_resumen["Casos/denuncias  anterior periodo"]
     )
 
     st.subheader("Variación absoluta por delito")
 
-    fig_var_abs = px.bar(
+fig_var_abs = px.bar(
         tabla_resumen,
         x="Delito",
         y="Variación absoluta",
         title="Cambio absoluto en número de denuncias por delito"
     )
 
-    fig_var_abs.update_layout(xaxis_tickangle=45)
+fig_var_abs.update_layout(xaxis_tickangle=45)
 
-    st.plotly_chart(fig_var_abs, use_container_width=True)
+st.plotly_chart(fig_var_abs, use_container_width=True)
 
-    st.markdown("---")
+st.markdown("---")
 
-    st.subheader("Tabla resumen consolidada por delito")
-    st.dataframe(tabla_resumen, use_container_width=True)
+st.subheader("Tabla resumen consolidada por delito")
+st.dataframe(tabla_resumen, use_container_width=True)
 
 
 # -------------------------------------------------------------------
