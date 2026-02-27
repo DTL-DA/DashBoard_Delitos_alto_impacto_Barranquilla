@@ -15,12 +15,18 @@ pagina = st.sidebar.radio(
 )
 
 # -------------------------------------------------------------------
-# FUNCIÓN DE CARGA DEL DATASET (FUERA DEL IF)
+# FUNCIÓN DE CARGA DEL DATASET (SOLO ESTA PARTE FUE MODIFICADA)
 # -------------------------------------------------------------------
 
 @st.cache_data(ttl=86400)
 def cargar_datos():
-    return pd.read_csv("https://www.datos.gov.co/api/views/72fa-9d9m/export.csv")
+    url = "https://www.datos.gov.co/resource/72fa-9d9m.csv?$limit=50000"
+    try:
+        return pd.read_csv(url)
+    except Exception as e:
+        st.error("Error al cargar los datos desde Datos Abiertos Colombia.")
+        st.write("Detalle técnico:", e)
+        st.stop()
 
 # -------------------------------------------------------------------
 # PÁGINA 1: DASHBOARD
