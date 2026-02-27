@@ -133,15 +133,22 @@ elif pagina == "Documentación y Metodología":
 
     st.markdown("## Fecha de acceso a los datos")
     st.write(f"""
-    Los datos fueron consultados y procesados el:  
-    **{datetime.now().strftime('%d de %B de %Y')}**
+    **Sábado, ‎21 ‎de ‎febrero ‎de ‎2026, ‏‎11:21:53 a. m.**
     """)
 
     st.markdown("## Periodo analizado")
     st.write("""
     Comparaciones interanuales entre periodos 2019 – 2023
     """)
-
+    st.markdown("""
+    Este panel presenta un análisis comparativo de los delitos de alto impacto en Barranquilla durante el periodo 2019–2023, utilizando el volumen de denuncias.
+    como variable central para comprender su evolución y comportamiento. El objetivo es evaluar la relación entre la dinámica de las denuncias y la variación
+    observada en cada delito, identificando patrones estructurales y tendencias emergentes. A través de métricas agregadas, comparativos interanuales y
+    visualizaciones analíticas, el usuario puede interpretar la magnitud y concentración del impacto delictivo. Las métricas superiores resumen los cambios
+    totales entre periodos, mientras que los gráficos detallan la contribución individual por delito. Este análisis busca aportar una base técnica y empírica
+    para la formulación y focalización de la estrategia de seguridad de la ciudad. En particular, sirve como insumo para la elaboración y ajuste del Plan Integral
+    de Seguridad y Convivencia Ciudadana (PISCC).
+    """)
     st.markdown("## Metodología aplicada")
     st.write("""
     El análisis sigue el marco QUEST:
@@ -153,18 +160,14 @@ elif pagina == "Documentación y Metodología":
     - T: Comunicación visual mediante dashboard interactivo.
     """)
 
-    st.markdown("## ¿Cómo actualizar los datos en el futuro?")
+    st.markdown("## Fuente:")
     st.write("""
-    Para mantener actualizado el panel:
 
-    1. Reemplazar el archivo CSV por la versión más reciente.
-    2. Mantener la misma estructura de columnas.
-    3. Verificar consistencia de nombres de delitos.
-    4. Ejecutar nuevamente la aplicación.
-    
-    En caso de integración futura con datos en línea:
-    - Se puede conectar a una API oficial.
-    - O automatizar la descarga periódica del dataset.
+     Proviene de Datos Abiertos Colombia, publicado por la Alcaldía Distrital de Barranquilla.
+   
+   -Link de acceso: https://www.datos.gov.co/d/4p95-h82w. presionar en "EXPORTAR".
+  
+   
     """)
 
     st.markdown("---")
