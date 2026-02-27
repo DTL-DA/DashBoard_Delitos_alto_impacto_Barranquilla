@@ -123,22 +123,33 @@ if pagina == "Dashboard Analítico":
 
     st.subheader("Matriz de correlación")
 
+
+    df_filtrado["Variación absoluta"] = (
+        df_filtrado["Casos/denuncias último periodo"] -
+        df_filtrado["Casos/denuncias  anterior periodo"]
+    )
+
+    df_filtrado["Variación %"] = (
+        df_filtrado["Variación absoluta"] /
+        df_filtrado["Casos/denuncias  anterior periodo"].replace(0, 1)
+    ) * 100
+    
     variables_corr = df_filtrado[[
         "Casos/denuncias  anterior periodo",
         "Casos/denuncias último periodo",
         "Variación %",
         "Variación absoluta"
-    ]]
-
+    ]].astype(float)
+    
     matriz_corr = variables_corr.corr()
-
+    
     fig4 = px.imshow(
         matriz_corr,
         text_auto=True,
         title="Mapa de calor de correlaciones",
         aspect="auto"
     )
-
+    
     st.plotly_chart(fig4, use_container_width=True)
 
     # -------------------------------------------------------------------
